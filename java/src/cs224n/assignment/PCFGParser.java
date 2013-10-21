@@ -23,7 +23,37 @@ public class PCFGParser implements Parser {
     }
 
     public Tree<String> getBestParse(List<String> sentence) {
-        // TODO: implement this method
+        // Implements the CKY algorithm for retrieving the best parse.
+        Set<String> nontermSet = lexicon.getAllTags();
+
+        // Convert the set of nontermials to a List<String> so that we can keep
+        // track of each nonterminal by its index.
+        List<String> nonterms = new ArrayList<String>(nontermSet);
+
+        double[][][] score = new double[sentence.size() + 1][sentence.size() +
+          1][nonterms.size()];
+        // TODO implement back pointers here
+
+        // Score the preterminals.
+        for (int i = 0; i < sentence.size(); i++) {
+            String word = sentence.get(i);
+            for (int j = 0; j < nonterms.size(); j++) {
+              String nonterm = nonterms.get(j);
+              // TODO How do we check whether there is a production rule for
+              // this nonterminal and word? Does it matter? (Probability should
+              // be 0 from the Lexicon if there's no instance of nonterm ->
+              // word) also see
+              // https://piazza.com/class/hjz2ma06gdh2hg?cid=142
+              score[i][i+1][j] = lexicon.scoreTagging(word, nonterm);
+            }
+        }
+
+        // TODO handle unaries
+        
+        // TODO implement for loop over span starting here - how do we
+        // interpret the for A, B, C loop over nonterminals? Consider all
+        // possible 3 combinations of A, B, C?
+
         return null;
     }
 }
