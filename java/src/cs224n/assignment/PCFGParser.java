@@ -34,15 +34,11 @@ public class PCFGParser implements Parser {
         //List<String> nonterms = new ArrayList<String>(nontermSet);
         //
         nonterms = grammar.getAllTags();
-        //System.out.println("%%%%%%% The grammar contains: %%%%%%\n");
-        //System.out.println(grammar.toString());
-
-        //System.out.println("%%%%%%% The Lexicon has the tags: %%%%%%%\n");
-        System.out.println(nonterms.toString());
     }
 
 
     public Tree<String> getBestParse(List<String> sentence) {
+        System.out.println(sentence.toString());
         double[][][] score = new double[sentence.size()+1][sentence.size()+1]
             [nonterms.size()];
         // This depends on the list of the nonterms staying constant.
@@ -55,7 +51,9 @@ public class PCFGParser implements Parser {
                 sentence.size(), nonterms.indexOf("S"));
         List<Tree<String>> child = new ArrayList<Tree<String>>();
         child.add(STree);
-        return TreeAnnotations.unAnnotateTree(new Tree<String>("ROOT", child));
+        Tree<String> bestParse = new Tree<String>("ROOT", child);
+        bestParse.setWords(sentence);
+        return TreeAnnotations.unAnnotateTree(bestParse);
     }
 
     /* The first part of the CKY Algorithm to fill the non-terminal that 
@@ -86,6 +84,7 @@ public class PCFGParser implements Parser {
                 added = false;
 
                 for (int b = 0; b < nonterms.size(); b++) {
+
                     List<UnaryRule> unaryRules =
                       grammar.getUnaryRulesByChild(nonterms.get(b));
 
@@ -120,8 +119,8 @@ public class PCFGParser implements Parser {
     private void fillingTable(double[][][] score, 
             String[][][] back, List<String> sentence) {
         // Loop for creating span numbers 
-        for (int span = 2 ; span < sentence.size() ; span++) {
-            for (int begin = 0 ; begin < sentence.size() - span; begin++) {
+        for (int span = 1 ; span <= sentence.size() ; span++) {
+            for (int begin = 0 ; begin <= sentence.size() - span; begin++) {
                 int end = begin + span;
 
                 for (int split = begin + 1 ; split <= end - 1 ; split ++) {
@@ -136,14 +135,6 @@ public class PCFGParser implements Parser {
                             int a = nonterms.indexOf(AString);
                             String CString = rule.getRightChild();
                             int c = nonterms.indexOf(CString);
-                            if (AString.equals("S")) {
-                                System.out.println("span " + span + ", begin " + 
-                                        begin + ", split" + split + ", bString " + 
-                                        BString);
-                                System.out.println("rule.getScore()" + rule.getScore()
-                                        + "score[begin][split][b]" + score[begin][split][b]
-                                        + "score[split][end][c]" + score[split][end][c]);
-                            }
 
                             double prob = score[begin][split][b] * 
                                 score[split][end][c] * rule.getScore(); 
@@ -188,10 +179,12 @@ public class PCFGParser implements Parser {
         List<Tree<String>> children = new ArrayList<Tree<String>>();
         String backEntry = back[i][j][parent];
         if (backEntry == null && score[i][j][parent] > 0) {
+            System.out.println("leaf");
             return new Tree<String>(nonterms.get(parent));
         }
         System.out.println("backEntry: " + back[i][j][parent]);
         if (backEntry.indexOf(".") < 0) {
+            System.out.println("backEntry" + backEntry + nonterms.get(Integer.parseInt(backEntry)));
             children.add(buildTree(score, back, i, j, Integer.parseInt(backEntry)));
         } else {
             String[] triple = backEntry.split("\\.");
