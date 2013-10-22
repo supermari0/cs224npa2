@@ -38,24 +38,24 @@ public class PCFGParser implements Parser {
         //System.out.println(grammar.toString());
 
         //System.out.println("%%%%%%% The Lexicon has the tags: %%%%%%%\n");
-        //System.out.println(nonterms.toString());
+        System.out.println(nonterms.toString());
     }
 
 
     public Tree<String> getBestParse(List<String> sentence) {
-        double[][][] score = new double[sentence.size() + 1][sentence.size() +
-          1][nonterms.size()];
+        double[][][] score = new double[sentence.size()+1][sentence.size()+1]
+            [nonterms.size()];
         // This depends on the list of the nonterms staying constant.
-        String[][][] back = new String[sentence.size() + 1][sentence.size() + 1][nonterms.size()];
+        String[][][] back = new String[sentence.size()+1][sentence.size()+1]
+            [nonterms.size()];
 
         fillingNonterminals(score, back, sentence);
         fillingTable(score, back, sentence);
         Tree<String> STree = buildTree(score, back, 0, 
-                sentence.size(), "S");
+                sentence.size() - 2, nonterms.indexOf("S"));
         List<Tree<String>> child = new ArrayList<Tree<String>>();
         child.add(STree);
         return TreeAnnotations.unAnnotateTree(new Tree<String>("ROOT", child));
-        //TODO: need to call unannotate
     }
 
     /* The first part of the CKY Algorithm to fill the non-terminal that 
@@ -100,15 +100,13 @@ public class PCFGParser implements Parser {
                             // of the unary rule.
                             int parentIndex = nonterms.indexOf(unaryRule.getParent());
 
-                            if (parentIndex != -1) {
-                                double prob = unaryRule.getScore() *
-                                    score[i][i+1][b];
+                            double prob = unaryRule.getScore() *
+                                score[i][i+1][b];
 
-                                if (prob > score[i][i+1][parentIndex]) {
-                                    score[i][i+1][parentIndex] = prob;
-                                    back[i][i+1][parentIndex] = "" + b;
-                                    added = true;
-                                }
+                            if (prob > score[i][i+1][parentIndex]) {
+                                score[i][i+1][parentIndex] = prob;
+                                back[i][i+1][parentIndex] = "" + b;
+                                added = true;
                             }
                         }
                     }
@@ -117,27 +115,40 @@ public class PCFGParser implements Parser {
         }
     }
 
+
     /* The second part of the CKY algorithm which fills the transition
      * rules for non-terminals
      */
     private void fillingTable(double[][][] score, 
             String[][][] back, List<String> sentence) {
+        System.out.println(sentence.size());
         // Loop for creating span numbers 
         for (int span = 2 ; span < sentence.size() ; span++) {
             for (int begin = 0 ; begin < sentence.size() - span; begin++) {
                 int end = begin + span;
 
-                for (int split = begin + 1 ; split < end - 1 ; split ++) {
+                for (int split = begin + 1 ; split <= end - 1 ; split ++) {
+                    System.out.println("begin " + begin + ", end " + 
+                                        end + ", split" + split);
+
+
                     for (int b = 0 ; b < nonterms.size() ; b++) {
                         String BString = nonterms.get(b); 
                         List<BinaryRule> rules = 
                             grammar.getBinaryRulesByLeftChild(BString); 
-
+                        
                         for (BinaryRule rule : rules) {
                             String AString = rule.getParent();
                             int a = nonterms.indexOf(AString);
                             String CString = rule.getRightChild();
                             int c = nonterms.indexOf(CString);
+                            /*
+                            if (AString.equals("S")) {
+                                System.out.println("span " + span + ", begin " + 
+                                        begin + ", split" + split + ", bString " + 
+                                        BString);
+                            }
+                            */
 
                             double prob = score[begin][split][b] * 
                                 score[split][end][c] * rule.getScore(); 
@@ -150,6 +161,7 @@ public class PCFGParser implements Parser {
                         }
                     }
                 }
+
                 // Handles unaries
                 boolean added = true;
                 while (added) {
@@ -170,17 +182,12 @@ public class PCFGParser implements Parser {
                 }
             }
         }
-        //printScore(score);
-        //printBack(back);
     }
 
     /* Create a tree given the score and the point backs 
      */
     private Tree<String> buildTree(double[][][] score, String[][][] back,
-            int i, int j, String parentString) {
-        System.out.println(parentString);
-        int parent = nonterms.indexOf(parentString);
-        System.out.println(parent);
+            int i, int j, int parent) {
         List<Tree<String>> children = new ArrayList<Tree<String>>();
         System.out.println("i: " + i + "j: " + j + "parent: " + parent);
         System.out.println("back sz: " + back.length);  
@@ -192,18 +199,18 @@ public class PCFGParser implements Parser {
         }
         System.out.println("backEntry: " + back[i][j][parent]);
         if (backEntry.indexOf(".") < 0) {
-            children.add(buildTree(score, back, i, j, backEntry));
+            children.add(buildTree(score, back, i, j, Integer.parseInt(backEntry)));
         } else {
             String[] triple = backEntry.split("\\.");
             Tree<String> leftSubtree = buildTree(score, back, i,
-                    Integer.parseInt(triple[0]), triple[1]);
+                    Integer.parseInt(triple[0]), nonterms.indexOf(triple[1]));
             children.add(leftSubtree);
             Tree<String> rightSubtree = buildTree(score, back, 
-                    Integer.parseInt(triple[0]), j, triple[2]);
+                    Integer.parseInt(triple[0]), j, nonterms.indexOf(triple[2]));
             children.add(rightSubtree);
         }
 
-        return new Tree<String>(parentString, children);
+        return new Tree<String>(nonterms.get(parent), children);
     }
 
     /* Helper functions to print out the scores and back values so far
@@ -211,7 +218,7 @@ public class PCFGParser implements Parser {
     private void printScore(double[][][] score) {
         for (int i = 0 ; i < score.length ; i ++) {
             for (int j = 0 ; j < score[i].length ; j++) {
-                for (int k = 0 ; k < score[j].length ; k++) {
+                for (int k = 0 ; k < score[i][j].length ; k++) {
                     System.out.println("(" + i + "," + j + "," + k + ") " + score[i][j][k]);
                 }
             }
@@ -221,7 +228,7 @@ public class PCFGParser implements Parser {
     private void printBack(String[][][] back) {
         for (int i = 0 ; i < back.length ; i ++) {
             for (int j = 0 ; j < back[i].length ; j++) {
-                for (int k = 0 ; k < back[j].length ; k++) {
+                for (int k = 0 ; k < back[i][j].length ; k++) {
                     System.out.println("(" + i + "," + j + "," + k + ") " + back[i][j][k]);
                 }
             }
