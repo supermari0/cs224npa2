@@ -55,7 +55,7 @@ public class PCFGParser implements Parser {
                 sentence.size() - 1, "S");
         List<Tree<String>> child = new ArrayList<Tree<String>>();
         child.add(STree);
-        return new Tree<String>("ROOT", child);
+        return TreeAnnotations.unAnnotateTree(new Tree<String>("ROOT", child));
         //TODO: need to call unannotate
     }
 
