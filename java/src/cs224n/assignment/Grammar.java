@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.HashSet;
 
 import cs224n.ling.Tree;
 import cs224n.util.CollectionUtils;
@@ -158,6 +159,25 @@ public class Grammar {
 	public List<UnaryRule> getUnaryRulesByChild(String child) {
 		return CollectionUtils.getValueList(unaryRulesByChild, child);
 	}
+
+    public List<String> getAllTags() {
+        HashSet<String> tags = new HashSet<String>();
+        for (Map.Entry<String, List<BinaryRule>> entry : binaryRulesByLeftChild.entrySet()) {
+            tags.add(entry.getKey());
+            for (BinaryRule rule : entry.getValue()) {
+                tags.add(rule.getParent());
+                tags.add(rule.getRightChild());
+            }
+        }
+
+        for (Map.Entry<String, List<UnaryRule>> entry : unaryRulesByChild.entrySet()) {
+            tags.add(entry.getKey());
+            for (UnaryRule rule : entry.getValue()) {
+                tags.add(rule.getParent());
+            }
+        }
+        return new ArrayList<String>(tags);
+    }
 
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
