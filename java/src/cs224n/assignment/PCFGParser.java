@@ -26,19 +26,11 @@ public class PCFGParser implements Parser {
         lexicon = new Lexicon(binarizedTrainTrees);
         grammar = new Grammar(binarizedTrainTrees);
 
-        // Implements the CKY algorithm for retrieving the best parse.
-        //Set<String> nontermSet = lexicon.getAllTags();
-
-        // Convert the set of nontermials to a List<String> so that we can keep
-        // track of each nonterminal by its index.
-        //List<String> nonterms = new ArrayList<String>(nontermSet);
-        //
         nonterms = grammar.getAllTags();
     }
 
 
     public Tree<String> getBestParse(List<String> sentence) {
-        System.out.println(sentence.toString());
         double[][][] score = new double[sentence.size()+1][sentence.size()+1]
             [nonterms.size()];
         // This depends on the list of the nonterms staying constant.
@@ -67,10 +59,6 @@ public class PCFGParser implements Parser {
             String word = sentence.get(i);
             for (int a = 0; a < nonterms.size(); a++) {
                 String nonterm = nonterms.get(a);
-                // TODO How do we check whether there is a production rule for
-                // this nonterminal and word? Does it matter? (Probability should
-                // be 0 from the Lexicon if there's no instance of nonterm ->
-                // word) also see
                 // https://piazza.com/class/hjz2ma06gdh2hg?cid=142
                 
                 double scoreTag = lexicon.scoreTagging(word, nonterm);
@@ -169,7 +157,6 @@ public class PCFGParser implements Parser {
                 }
             }
         }
-        printBack(back);
     }
 
     /* Create a tree given the score and the point backs 
@@ -183,7 +170,6 @@ public class PCFGParser implements Parser {
             children.add(leaf);
             return new Tree<String>(nonterms.get(parent), children);
         }
-        System.out.println("backEntry: " + back[i][j][parent]);
         if (backEntry.indexOf(".") < 0) {
             children.add(buildTree(score, back, i, j, Integer.parseInt(backEntry)));
         } else {
