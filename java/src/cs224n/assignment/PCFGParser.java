@@ -53,7 +53,8 @@ public class PCFGParser implements Parser {
         child.add(STree);
         Tree<String> bestParse = new Tree<String>("ROOT", child);
         bestParse.setWords(sentence);
-        return TreeAnnotations.unAnnotateTree(bestParse);
+        bestParse = TreeAnnotations.unAnnotateTree(bestParse);
+        return bestParse;
     }
 
     /* The first part of the CKY Algorithm to fill the non-terminal that 
@@ -175,16 +176,15 @@ public class PCFGParser implements Parser {
      */
     private Tree<String> buildTree(double[][][] score, String[][][] back,
             int i, int j, int parent) {
-        System.out.println(parent);
         List<Tree<String>> children = new ArrayList<Tree<String>>();
         String backEntry = back[i][j][parent];
         if (backEntry == null && score[i][j][parent] > 0) {
-            System.out.println("leaf");
-            return new Tree<String>(nonterms.get(parent));
+            Tree<String> leaf = new Tree<String>("fake");
+            children.add(leaf);
+            return new Tree<String>(nonterms.get(parent), children);
         }
         System.out.println("backEntry: " + back[i][j][parent]);
         if (backEntry.indexOf(".") < 0) {
-            System.out.println("backEntry" + backEntry + nonterms.get(Integer.parseInt(backEntry)));
             children.add(buildTree(score, back, i, j, Integer.parseInt(backEntry)));
         } else {
             String[] triple = backEntry.split("\\.");
