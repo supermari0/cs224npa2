@@ -46,13 +46,12 @@ public class PCFGParser implements Parser {
         double[][][] score = new double[sentence.size() + 1][sentence.size() +
           1][nonterms.size()];
         // This depends on the list of the nonterms staying constant.
-        String[][][] back = new String[sentence.size() + 1][sentence.size() + 1]
-            [nonterms.size()];
+        String[][][] back = new String[sentence.size() + 1][sentence.size() + 1][nonterms.size()];
 
         fillingNonterminals(score, back, sentence);
         fillingTable(score, back, sentence);
         Tree<String> STree = buildTree(score, back, 0, 
-                sentence.size() - 1, "S");
+                sentence.size(), "S");
         List<Tree<String>> child = new ArrayList<Tree<String>>();
         child.add(STree);
         return TreeAnnotations.unAnnotateTree(new Tree<String>("ROOT", child));
@@ -78,8 +77,8 @@ public class PCFGParser implements Parser {
                 double scoreTag = lexicon.scoreTagging(word, nonterm);
                 if (scoreTag > 0) {
                     score[i][i+1][a] = scoreTag; 
-                System.out.println(i + ":" + word + ", " + a + ":" + nonterm + "-----" + 
-                        scoreTag);
+                    System.out.println(i + ":" + word + ", " + a + ":" + nonterm + "-----" + 
+                          scoreTag);
                 }
             }
             // Handle unaries.
@@ -125,7 +124,7 @@ public class PCFGParser implements Parser {
             String[][][] back, List<String> sentence) {
         // Loop for creating span numbers 
         for (int span = 2 ; span < sentence.size() ; span++) {
-            for (int begin = 0 ; begin < sentence.size() - span ; span++) {
+            for (int begin = 0 ; begin < sentence.size() - span; begin++) {
                 int end = begin + span;
 
                 for (int split = begin + 1 ; split < end - 1 ; split ++) {
@@ -181,8 +180,17 @@ public class PCFGParser implements Parser {
             int i, int j, String parentString) {
         System.out.println(parentString);
         int parent = nonterms.indexOf(parentString);
+        System.out.println(parent);
         List<Tree<String>> children = new ArrayList<Tree<String>>();
+        System.out.println("i: " + i + "j: " + j + "parent: " + parent);
+        System.out.println("back sz: " + back.length);  
+        System.out.println("back[i] sz: " + back[i].length);
+        System.out.println("back[i][j] sz: " + back[i][j].length);
         String backEntry = back[i][j][parent];
+        for (String test : back[i][j]) {
+          System.out.println("Test: " + test);
+        }
+        System.out.println("backEntry: " + back[i][j][parent]);
         if (backEntry.indexOf(".") < 0) {
             children.add(buildTree(score, back, i, j, backEntry));
         } else {
