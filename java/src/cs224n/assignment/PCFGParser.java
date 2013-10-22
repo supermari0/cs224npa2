@@ -119,16 +119,12 @@ public class PCFGParser implements Parser {
      */
     private void fillingTable(double[][][] score, 
             String[][][] back, List<String> sentence) {
-        System.out.println(sentence.size());
         // Loop for creating span numbers 
         for (int span = 2 ; span < sentence.size() ; span++) {
             for (int begin = 0 ; begin < sentence.size() - span; begin++) {
                 int end = begin + span;
 
                 for (int split = begin + 1 ; split <= end - 1 ; split ++) {
-                    System.out.println("begin " + begin + ", end " + 
-                                        end + ", split" + split);
-
 
                     for (int b = 0 ; b < nonterms.size() ; b++) {
                         String BString = nonterms.get(b); 
@@ -140,13 +136,14 @@ public class PCFGParser implements Parser {
                             int a = nonterms.indexOf(AString);
                             String CString = rule.getRightChild();
                             int c = nonterms.indexOf(CString);
-                            /*
                             if (AString.equals("S")) {
                                 System.out.println("span " + span + ", begin " + 
                                         begin + ", split" + split + ", bString " + 
                                         BString);
+                                System.out.println("rule.getScore()" + rule.getScore()
+                                        + "score[begin][split][b]" + score[begin][split][b]
+                                        + "score[split][end][c]" + score[split][end][c]);
                             }
-                            */
 
                             double prob = score[begin][split][b] * 
                                 score[split][end][c] * rule.getScore(); 
@@ -180,20 +177,18 @@ public class PCFGParser implements Parser {
                 }
             }
         }
+        printBack(back);
     }
 
     /* Create a tree given the score and the point backs 
      */
     private Tree<String> buildTree(double[][][] score, String[][][] back,
             int i, int j, int parent) {
+        System.out.println(parent);
         List<Tree<String>> children = new ArrayList<Tree<String>>();
-        System.out.println("i: " + i + "j: " + j + "parent: " + parent);
-        System.out.println("back sz: " + back.length);  
-        System.out.println("back[i] sz: " + back[i].length);
-        System.out.println("back[i][j] sz: " + back[i][j].length);
         String backEntry = back[i][j][parent];
-        for (String test : back[i][j]) {
-          System.out.println("Test: " + test);
+        if (backEntry == null && score[i][j][parent] > 0) {
+            return new Tree<String>(nonterms.get(parent));
         }
         System.out.println("backEntry: " + back[i][j][parent]);
         if (backEntry.indexOf(".") < 0) {
@@ -201,10 +196,10 @@ public class PCFGParser implements Parser {
         } else {
             String[] triple = backEntry.split("\\.");
             Tree<String> leftSubtree = buildTree(score, back, i,
-                    Integer.parseInt(triple[0]), nonterms.indexOf(triple[1]));
+                    Integer.parseInt(triple[0]), Integer.parseInt(triple[1]));
             children.add(leftSubtree);
             Tree<String> rightSubtree = buildTree(score, back, 
-                    Integer.parseInt(triple[0]), j, nonterms.indexOf(triple[2]));
+                    Integer.parseInt(triple[0]), j, Integer.parseInt(triple[2]));
             children.add(rightSubtree);
         }
 
