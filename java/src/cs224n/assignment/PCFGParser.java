@@ -52,7 +52,7 @@ public class PCFGParser implements Parser {
         fillingNonterminals(score, back, sentence);
         fillingTable(score, back, sentence);
         Tree<String> STree = buildTree(score, back, 0, 
-                sentence.size() - 2, nonterms.indexOf("S"));
+                sentence.size(), nonterms.indexOf("S"));
         List<Tree<String>> child = new ArrayList<Tree<String>>();
         child.add(STree);
         return TreeAnnotations.unAnnotateTree(new Tree<String>("ROOT", child));
@@ -77,8 +77,6 @@ public class PCFGParser implements Parser {
                 double scoreTag = lexicon.scoreTagging(word, nonterm);
                 if (scoreTag > 0) {
                     score[i][i+1][a] = scoreTag; 
-                    System.out.println(i + ":" + word + ", " + a + ":" + nonterm + "-----" + 
-                          scoreTag);
                 }
             }
             // Handle unaries.
