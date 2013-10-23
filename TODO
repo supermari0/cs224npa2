@@ -11,6 +11,16 @@ TODO
 - Comment code
 - Write report
 
-Current score:
+Optimization score:
  [Average]    P: 81.07   R: 75.64   F1: 78.26   EX: 20.00 
+Optimization time:
+real    6m59.874s
+user    7m3.640s
+sys     0m6.044s
 
+With Markov score:
+ [Average]    P: 82.48   R: 80.68   F1: 81.57   EX: 30.97 
+With Markov time:
+ real    9m19.219s
+ user    9m46.176s
+ sys     0m7.448s
