@@ -57,7 +57,7 @@ public class PCFGParserTester {
 		options.put("-path",      "/afs/ir/class/cs224n/pa2/data/");
 		options.put("-data",      "treebank");
 		options.put("-parser",    "cs224n.assignment.PCFGParser");
-		options.put("-maxLength", "5");
+		options.put("-maxLength", "20");
 
 		// let command-line options supersede defaults .........................
 		options.putAll(CommandLineUtils.simpleCommandLineParser(args));
