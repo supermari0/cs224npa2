@@ -25,10 +25,10 @@ public class PCFGParser implements Parser {
 
         lexicon = new Lexicon(binarizedTrainTrees);
         grammar = new Grammar(binarizedTrainTrees);
-        System.out.println(grammar.toString());
+        //System.out.println(grammar.toString());
 
         nonterms = grammar.getAllTags();
-        System.out.println(nonterms.toString());
+        //System.out.println(nonterms.toString());
     }
 
 
@@ -110,7 +110,7 @@ public class PCFGParser implements Parser {
     private void fillingTable(double[][][] score, 
             String[][][] back, List<String> sentence) {
         // Loop for creating span numbers 
-        for (int span = 1 ; span <= sentence.size() ; span++) {
+        for (int span = 2 ; span <= sentence.size() ; span++) {
             for (int begin = 0 ; begin <= sentence.size() - span; begin++) {
                 int end = begin + span;
 
