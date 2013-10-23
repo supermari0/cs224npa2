@@ -3,6 +3,7 @@ package cs224n.assignment;
 import cs224n.assignment.Grammar.UnaryRule;
 import cs224n.assignment.Grammar.BinaryRule;
 import cs224n.ling.Tree;
+import cs224n.util.Pair;
 import java.util.*;
 import java.lang.String;
 import java.lang.Integer;
@@ -25,24 +26,23 @@ public class PCFGParser implements Parser {
 
         lexicon = new Lexicon(binarizedTrainTrees);
         grammar = new Grammar(binarizedTrainTrees);
-        //System.out.println(grammar.toString());
 
         nonterms = grammar.getAllTags();
-        //System.out.println(nonterms.toString());
     }
 
 
     public Tree<String> getBestParse(List<String> sentence) {
-        double[][][] score = new double[sentence.size()+1][sentence.size()+1]
-            [nonterms.size()];
-        // This depends on the list of the nonterms staying constant.
-        String[][][] back = new String[sentence.size()+1][sentence.size()+1]
-            [nonterms.size()];
+        // Replacing the triple matrix with a HashMap of 
+        // String with current index of (i, j, nonterm) with a value of 
+        // a pair of Double and String of (either B, or current split,
+        // A and B).
+        HashMap<String, HashMap<String, Pair<Double, String>>> scoreBack = 
+            new HashMap<String, HashMap<String, Pair<Double, String>>>();
 
-        fillingNonterminals(score, back, sentence);
-        fillingTable(score, back, sentence);
-        Tree<String> STree = buildTree(score, back, 0, 
-                sentence.size(), nonterms.indexOf("S^ROOT"));
+        fillingNonterminals(scoreBack, sentence);
+        fillingTable(scoreBack, sentence);
+        Tree<String> STree = buildTree(scoreBack, 0, 
+                sentence.size(), "S");
         List<Tree<String>> child = new ArrayList<Tree<String>>();
         child.add(STree);
         Tree<String> bestParse = new Tree<String>("ROOT", child);
@@ -54,18 +54,21 @@ public class PCFGParser implements Parser {
     /* The first part of the CKY Algorithm to fill the non-terminal that 
      * become words
      */
-    private void fillingNonterminals(double[][][] score, 
-            String[][][] back, List<String> sentence) {
+    private void fillingNonterminals(
+            HashMap<String, HashMap<String, Pair<Double, String>>> scoreBack, 
+            List<String> sentence) {
         // Score the preterminals.
         for (int i = 0; i < sentence.size(); i++) {
             String word = sentence.get(i);
-            for (int a = 0; a < nonterms.size(); a++) {
-                String nonterm = nonterms.get(a);
+            HashMap<String, Pair<Double, String>> inner = 
+                new HashMap<String, Pair<Double, String>>();
+            scoreBack.put(makeIndex(i, i+1), inner);
+            for (String nonterm: nonterms) {
                 // https://piazza.com/class/hjz2ma06gdh2hg?cid=142
                 
                 double scoreTag = lexicon.scoreTagging(word, nonterm);
                 if (scoreTag > 0) {
-                    score[i][i+1][a] = scoreTag; 
+                    inner.put(nonterm, new Pair<Double, String>(scoreTag, ""));
                 }
             }
             // Handle unaries.
@@ -74,26 +77,30 @@ public class PCFGParser implements Parser {
             while (added) {
                 added = false;
 
-                for (int b = 0; b < nonterms.size(); b++) {
+                String[] keys = inner.keySet().toArray(new String[0]);
+                for (int b = 0 ; b < keys.length ; b++) {
+                    String nonterm = keys[b];
 
                     List<UnaryRule> unaryRules =
-                      grammar.getUnaryRulesByChild(nonterms.get(b));
+                      grammar.getUnaryRulesByChild(nonterm);
 
-                    if (score[i][i+1][b] > 0) {
+                    Double bScore = inner.get(nonterm).getFirst();
+                    if (bScore > 0) {
 
                         for (int k = 0; k < unaryRules.size(); k++) {
 
                             UnaryRule unaryRule = unaryRules.get(k);
                             // Find the index into the score array for the parent
                             // of the unary rule.
-                            int parentIndex = nonterms.indexOf(unaryRule.getParent());
+                            String parent = unaryRule.getParent(); 
 
-                            double prob = unaryRule.getScore() *
-                                score[i][i+1][b];
+                            double prob = unaryRule.getScore() * bScore;
 
-                            if (prob > score[i][i+1][parentIndex]) {
-                                score[i][i+1][parentIndex] = prob;
-                                back[i][i+1][parentIndex] = "" + b;
+                            Pair<Double, String> parentPair = inner.get(parent);
+                            if (parentPair == null ||
+                                    prob > parentPair.getFirst()) {
+                                inner.put(parent, 
+                                        new Pair<Double, String>(prob, "" + nonterm));
                                 added = true;
                             }
                         }
@@ -107,33 +114,50 @@ public class PCFGParser implements Parser {
     /* The second part of the CKY algorithm which fills the transition
      * rules for non-terminals
      */
-    private void fillingTable(double[][][] score, 
-            String[][][] back, List<String> sentence) {
+    private void fillingTable(
+            HashMap<String, HashMap<String, Pair<Double, String>>> scoreBack, 
+            List<String> sentence) {
         // Loop for creating span numbers 
         for (int span = 2 ; span <= sentence.size() ; span++) {
             for (int begin = 0 ; begin <= sentence.size() - span; begin++) {
                 int end = begin + span;
 
+                if (!scoreBack.containsKey(makeIndex(begin, end))) {
+                    scoreBack.put(makeIndex(begin, end), 
+                            new HashMap<String, Pair<Double, String>>());
+                }
+                HashMap<String, Pair<Double, String>> beginEnd
+                    = scoreBack.get(makeIndex(begin, end));
                 for (int split = begin + 1 ; split <= end - 1 ; split ++) {
+                    HashMap<String, Pair<Double, String>> beginSplit
+                        = scoreBack.get(makeIndex(begin, split));
 
-                    for (int b = 0 ; b < nonterms.size() ; b++) {
-                        String BString = nonterms.get(b); 
+                    HashMap<String, Pair<Double, String>> splitEnd 
+                        = scoreBack.get(makeIndex(split, end));
+
+                    for (String BString : nonterms) {
                         List<BinaryRule> rules = 
                             grammar.getBinaryRulesByLeftChild(BString); 
                         
                         for (BinaryRule rule : rules) {
                             String AString = rule.getParent();
-                            int a = nonterms.indexOf(AString);
                             String CString = rule.getRightChild();
-                            int c = nonterms.indexOf(CString);
+                            
+                            if (beginSplit.containsKey(BString) &&
+                                    splitEnd.containsKey(CString)) {
 
-                            double prob = score[begin][split][b] * 
-                                score[split][end][c] * rule.getScore(); 
+                                double prob = beginSplit.get(BString).getFirst() * 
+                                    splitEnd.get(CString).getFirst() * rule.getScore(); 
 
-                            if (prob > score[begin][end][a]) {
-                                score[begin][end][a] = prob;
-                                back[begin][end][a] = split + "." + 
-                                    b + "." + c;
+
+                                Pair<Double, String> parentPair = 
+                                    beginEnd.get(AString);
+                                if (parentPair == null ||
+                                        prob > parentPair.getFirst()) {
+                                    beginEnd.put(AString, 
+                                            new Pair<Double, String>(prob, split + "." + 
+                                                BString + "." + CString));
+                                }
                             }
                         }
                     }
@@ -143,69 +167,91 @@ public class PCFGParser implements Parser {
                 boolean added = true;
                 while (added) {
                     added = false;
-                    for (int b = 0; b < nonterms.size(); b++) {
-                        List<UnaryRule> unaryRules =
-                          grammar.getUnaryRulesByChild(nonterms.get(b));
-                        for (UnaryRule rule : unaryRules) {
-                            double prob = rule.getScore() * score[begin][end][b];
-                            int a = nonterms.indexOf(rule.getParent());
-                            if (prob > score[begin][end][a]) {
-                                score[begin][end][a] = prob;
-                                back[begin][end][a] = "" + b;
-                                added = true;
+                    for (String BString : nonterms) {
+                        Pair<Double, String> BPair = 
+                            beginEnd.get(BString);
+                        if (BPair != null) {
+                            List<UnaryRule> unaryRules =
+                              grammar.getUnaryRulesByChild(BString);
+
+                            double BScore = BPair.getFirst();
+                            for (UnaryRule rule : unaryRules) {
+                                double prob = rule.getScore() * BScore;
+                                String AString = rule.getParent();
+
+                                Pair<Double, String> parentPair = 
+                                    beginEnd.get(AString);
+                                if (parentPair == null ||
+                                        prob > parentPair.getFirst()) {
+                                    beginEnd.put(AString, 
+                                            new Pair<Double, String>(prob, "" + BString));
+                                    added = true;
+                                }
                             }
                         }
                     }
                 }
             }
         }
+        //printScoreBack(scoreBack);
     }
+
 
     /* Create a tree given the score and the point backs 
      */
-    private Tree<String> buildTree(double[][][] score, String[][][] back,
-            int i, int j, int parent) {
+    private Tree<String> buildTree(
+            HashMap<String, HashMap<String, Pair<Double, String>>> scoreBack,
+            int i, int j, String parent) {
         List<Tree<String>> children = new ArrayList<Tree<String>>();
-        String backEntry = back[i][j][parent];
-        if (backEntry == null && score[i][j][parent] > 0) {
+        Pair<Double, String> back = scoreBack.get(makeIndex(i, j)).get(parent);
+        System.out.println(back);
+        if (back.getSecond().equals("") && back.getFirst() > 0) {
             Tree<String> leaf = new Tree<String>("fake");
             children.add(leaf);
-            return new Tree<String>(nonterms.get(parent), children);
+            return new Tree<String>(parent, children);
         }
+
+        String backEntry = back.getSecond();
         if (backEntry.indexOf(".") < 0) {
-            children.add(buildTree(score, back, i, j, Integer.parseInt(backEntry)));
+            children.add(buildTree(scoreBack, i, j, backEntry));
         } else {
+            System.out.println(backEntry);
             String[] triple = backEntry.split("\\.");
-            Tree<String> leftSubtree = buildTree(score, back, i,
-                    Integer.parseInt(triple[0]), Integer.parseInt(triple[1]));
+            System.out.println(triple);
+            Tree<String> leftSubtree = buildTree(scoreBack, i,
+                    Integer.parseInt(triple[0]), triple[1]);
             children.add(leftSubtree);
-            Tree<String> rightSubtree = buildTree(score, back, 
-                    Integer.parseInt(triple[0]), j, Integer.parseInt(triple[2]));
+            Tree<String> rightSubtree = buildTree(scoreBack, 
+                    Integer.parseInt(triple[0]), j, triple[2]);
             children.add(rightSubtree);
         }
 
-        return new Tree<String>(nonterms.get(parent), children);
+        return new Tree<String>(parent, children);
     }
 
+
+    private String makeIndex(int i, int j) {
+        return "" + i + "." + j;
+    }
+
+    
     /* Helper functions to print out the scores and back values so far
      */
-    private void printScore(double[][][] score) {
-        for (int i = 0 ; i < score.length ; i ++) {
-            for (int j = 0 ; j < score[i].length ; j++) {
-                for (int k = 0 ; k < score[i][j].length ; k++) {
-                    System.out.println("(" + i + "," + j + "," + k + ") " + score[i][j][k]);
-                }
+    private void printScoreBack(
+            HashMap<String, HashMap<String, Pair<Double, String>>> scoreBack) {
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, HashMap<String, Pair<Double, String>>> outer :
+                scoreBack.entrySet()) {
+            sb.append(outer.getKey()).append("\n");
+            for (Map.Entry<String, Pair<Double, String>> nonterm : 
+                    outer.getValue().entrySet()) {
+                sb.append("\t");
+                sb.append(nonterm.getKey());
+                sb.append("-----");
+                sb.append(nonterm.getValue());
+                sb.append("\n");
             }
         }
-    }
-
-    private void printBack(String[][][] back) {
-        for (int i = 0 ; i < back.length ; i ++) {
-            for (int j = 0 ; j < back[i].length ; j++) {
-                for (int k = 0 ; k < back[i][j].length ; k++) {
-                    System.out.println("(" + i + "," + j + "," + k + ") " + back[i][j][k]);
-                }
-            }
-        }
+        System.out.println(sb.toString());
     }
 }

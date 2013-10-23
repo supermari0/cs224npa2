@@ -19,15 +19,14 @@ public class TreeAnnotations {
 	public static Tree<String> annotateTree(Tree<String> unAnnotatedTree) {
 
         Tree<String> markov = unAnnotatedTree.deepCopy();
-        vMarkov(markov);
-        //System.out.println(markov.toString());
+        //vMarkov(markov);
 
 		// Currently, the only annotation done is a lossless binarization
 
-		// TODO: change the annotation from a lossless binarization to a
+		// change the annotation from a lossless binarization to a
 		// finite-order markov process (try at least 1st and 2nd order)
 
-		// TODO : mark nodes with the label of their parent nodes, giving a second
+		// mark nodes with the label of their parent nodes, giving a second
 		// order vertical markov process
 
 		return binarizeTree(markov);

@@ -71,6 +71,7 @@
          optimize="${compile.optimize}"
          includeantruntime="false"
 	   source="${compile.source}">
+      <compilerarg value="-Xlint:unchecked"/>
     </javac>
 
   </target>
