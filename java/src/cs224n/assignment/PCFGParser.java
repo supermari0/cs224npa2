@@ -26,7 +26,6 @@ public class PCFGParser implements Parser {
 
         lexicon = new Lexicon(binarizedTrainTrees);
         grammar = new Grammar(binarizedTrainTrees);
-        System.out.println(grammar.toString());
 
         nonterms = grammar.getAllTags();
     }
@@ -78,7 +77,9 @@ public class PCFGParser implements Parser {
             while (added) {
                 added = false;
 
-                for (String nonterm : inner.keySet()) {
+                String[] keys = inner.keySet().toArray(new String[0]);
+                for (int b = 0 ; b < keys.length ; b++) {
+                    String nonterm = keys[b];
 
                     List<UnaryRule> unaryRules =
                       grammar.getUnaryRulesByChild(nonterm);
@@ -117,10 +118,14 @@ public class PCFGParser implements Parser {
             HashMap<String, HashMap<String, Pair<Double, String>>> scoreBack, 
             List<String> sentence) {
         // Loop for creating span numbers 
-        for (int span = 1 ; span <= sentence.size() ; span++) {
+        for (int span = 2 ; span <= sentence.size() ; span++) {
             for (int begin = 0 ; begin <= sentence.size() - span; begin++) {
                 int end = begin + span;
 
+                if (!scoreBack.containsKey(makeIndex(begin, end))) {
+                    scoreBack.put(makeIndex(begin, end), 
+                            new HashMap<String, Pair<Double, String>>());
+                }
                 HashMap<String, Pair<Double, String>> beginEnd
                     = scoreBack.get(makeIndex(begin, end));
                 for (int split = begin + 1 ; split <= end - 1 ; split ++) {
@@ -165,9 +170,10 @@ public class PCFGParser implements Parser {
                     for (String BString : nonterms) {
                         Pair<Double, String> BPair = 
                             beginEnd.get(BString);
-                        if (BString != null) {
+                        if (BPair != null) {
                             List<UnaryRule> unaryRules =
                               grammar.getUnaryRulesByChild(BString);
+
                             double BScore = BPair.getFirst();
                             for (UnaryRule rule : unaryRules) {
                                 double prob = rule.getScore() * BScore;
@@ -187,6 +193,7 @@ public class PCFGParser implements Parser {
                 }
             }
         }
+        //printScoreBack(scoreBack);
     }
 
 
@@ -198,7 +205,7 @@ public class PCFGParser implements Parser {
         List<Tree<String>> children = new ArrayList<Tree<String>>();
         Pair<Double, String> back = scoreBack.get(makeIndex(i, j)).get(parent);
 
-        if (back == null && back.getFirst() > 0) {
+        if (back.getSecond().equals("") && back.getFirst() > 0) {
             Tree<String> leaf = new Tree<String>("fake");
             children.add(leaf);
             return new Tree<String>(parent, children);
@@ -243,5 +250,6 @@ public class PCFGParser implements Parser {
                 sb.append("\n");
             }
         }
+        System.out.println(sb.toString());
     }
 }

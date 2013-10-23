@@ -20,7 +20,6 @@ public class TreeAnnotations {
 
         Tree<String> markov = unAnnotatedTree.deepCopy();
         vMarkov(markov);
-        System.out.println(markov.toString());
 
 		// Currently, the only annotation done is a lossless binarization
 
