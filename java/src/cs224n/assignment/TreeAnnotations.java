@@ -24,10 +24,10 @@ public class TreeAnnotations {
 
 		// Currently, the only annotation done is a lossless binarization
 
-		// TODO: change the annotation from a lossless binarization to a
+		// change the annotation from a lossless binarization to a
 		// finite-order markov process (try at least 1st and 2nd order)
 
-		// TODO : mark nodes with the label of their parent nodes, giving a second
+		// mark nodes with the label of their parent nodes, giving a second
 		// order vertical markov process
 
 		return binarizeTree(markov);
