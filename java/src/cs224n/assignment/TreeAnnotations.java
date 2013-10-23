@@ -18,7 +18,7 @@ public class TreeAnnotations {
 
 	public static Tree<String> annotateTree(Tree<String> unAnnotatedTree) {
 
-        Tree<String> markov = binarizeTree(unAnnotatedTree);
+        Tree<String> markov = unAnnotatedTree.deepCopy();
         vMarkov(markov);
 
 		// Currently, the only annotation done is a lossless binarization
@@ -34,7 +34,7 @@ public class TreeAnnotations {
 	}
 
     private static void vMarkov(Tree<String> copy) {
-        if (!copy.isLeaf()) {
+        if (!copy.isPreTerminal()) {
             String label = copy.getLabel().split("\\^")[0];
             for (Tree<String> child : copy.getChildren()) {
                 String childLabel = child.getLabel();
