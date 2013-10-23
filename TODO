@@ -10,3 +10,7 @@ TODO
 - Remove all extraneous println
 - Comment code
 - Write report
+
+Current score:
+ [Average]    P: 81.07   R: 75.64   F1: 78.26   EX: 20.00 
+
