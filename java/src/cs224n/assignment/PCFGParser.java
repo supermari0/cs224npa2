@@ -155,8 +155,8 @@ public class PCFGParser implements Parser {
                                 if (parentPair == null ||
                                         prob > parentPair.getFirst()) {
                                     beginEnd.put(AString, 
-                                            new Pair<Double, String>(prob, split + "." + 
-                                                BString + "." + CString));
+                                            new Pair<Double, String>(prob, split + "]" + 
+                                                BString + "]" + CString));
                                 }
                             }
                         }
@@ -212,11 +212,11 @@ public class PCFGParser implements Parser {
         }
 
         String backEntry = back.getSecond();
-        if (backEntry.indexOf(".") < 0) {
+        if (backEntry.indexOf("]") < 0) {
             children.add(buildTree(scoreBack, i, j, backEntry));
         } else {
             System.out.println(backEntry);
-            String[] triple = backEntry.split("\\.");
+            String[] triple = backEntry.split("\\]");
             System.out.println(triple);
             Tree<String> leftSubtree = buildTree(scoreBack, i,
                     Integer.parseInt(triple[0]), triple[1]);
