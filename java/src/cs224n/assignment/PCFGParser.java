@@ -28,6 +28,10 @@ public class PCFGParser implements Parser {
         grammar = new Grammar(binarizedTrainTrees);
 
         nonterms = grammar.getAllTags();
+        // Possibly just look at the given list of trees
+        // before binarization for the nonterms in the first round
+        // of nonterm going to a word. It might be a lot faster
+        // but also slower since you need to Lexiconize each tree.
     }
 
 
@@ -128,6 +132,7 @@ public class PCFGParser implements Parser {
                 }
                 HashMap<String, Pair<Double, String>> beginEnd
                     = scoreBack.get(makeIndex(begin, end));
+
                 for (int split = begin + 1 ; split <= end - 1 ; split ++) {
                     HashMap<String, Pair<Double, String>> beginSplit
                         = scoreBack.get(makeIndex(begin, split));
@@ -135,20 +140,22 @@ public class PCFGParser implements Parser {
                     HashMap<String, Pair<Double, String>> splitEnd 
                         = scoreBack.get(makeIndex(split, end));
 
-                    for (String BString : nonterms) {
+                    String[] keys = beginSplit.keySet().toArray(new String[0]);
+                    for (int b = 0 ; b < keys.length ; b++) {
+
+                        String BString = keys[b]; 
                         List<BinaryRule> rules = 
                             grammar.getBinaryRulesByLeftChild(BString); 
+                        double BScore = beginSplit.get(BString).getFirst();
                         
                         for (BinaryRule rule : rules) {
                             String AString = rule.getParent();
                             String CString = rule.getRightChild();
                             
-                            if (beginSplit.containsKey(BString) &&
-                                    splitEnd.containsKey(CString)) {
+                            if (splitEnd.containsKey(CString)) {
 
-                                double prob = beginSplit.get(BString).getFirst() * 
-                                    splitEnd.get(CString).getFirst() * rule.getScore(); 
-
+                                double prob = BScore * splitEnd.get(CString).getFirst() 
+                                    * rule.getScore(); 
 
                                 Pair<Double, String> parentPair = 
                                     beginEnd.get(AString);
@@ -167,26 +174,28 @@ public class PCFGParser implements Parser {
                 boolean added = true;
                 while (added) {
                     added = false;
-                    for (String BString : nonterms) {
+
+                    String[] keys = beginEnd.keySet().toArray(new String[0]);
+                    for (int b = 0 ; b < keys.length ; b++) {
+                        String BString = keys[b];
+
                         Pair<Double, String> BPair = 
                             beginEnd.get(BString);
-                        if (BPair != null) {
-                            List<UnaryRule> unaryRules =
-                              grammar.getUnaryRulesByChild(BString);
+                        List<UnaryRule> unaryRules =
+                          grammar.getUnaryRulesByChild(BString);
 
-                            double BScore = BPair.getFirst();
-                            for (UnaryRule rule : unaryRules) {
-                                double prob = rule.getScore() * BScore;
-                                String AString = rule.getParent();
+                        double BScore = BPair.getFirst();
+                        for (UnaryRule rule : unaryRules) {
+                            double prob = rule.getScore() * BScore;
+                            String AString = rule.getParent();
 
-                                Pair<Double, String> parentPair = 
-                                    beginEnd.get(AString);
-                                if (parentPair == null ||
-                                        prob > parentPair.getFirst()) {
-                                    beginEnd.put(AString, 
-                                            new Pair<Double, String>(prob, "" + BString));
-                                    added = true;
-                                }
+                            Pair<Double, String> parentPair = 
+                                beginEnd.get(AString);
+                            if (parentPair == null ||
+                                    prob > parentPair.getFirst()) {
+                                beginEnd.put(AString, 
+                                        new Pair<Double, String>(prob, "" + BString));
+                                added = true;
                             }
                         }
                     }
