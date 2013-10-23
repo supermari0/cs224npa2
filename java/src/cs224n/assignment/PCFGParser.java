@@ -42,12 +42,12 @@ public class PCFGParser implements Parser {
         fillingNonterminals(scoreBack, sentence);
         fillingTable(scoreBack, sentence);
         Tree<String> STree = buildTree(scoreBack, 0, 
-                sentence.size(), "S");
+                sentence.size(), "S^ROOT");
         List<Tree<String>> child = new ArrayList<Tree<String>>();
         child.add(STree);
         Tree<String> bestParse = new Tree<String>("ROOT", child);
         bestParse.setWords(sentence);
-        bestParse = TreeAnnotations.unAnnotateTree(bestParse);
+//        bestParse = TreeAnnotations.unAnnotateTree(bestParse);
         return bestParse;
     }
 
@@ -204,6 +204,7 @@ public class PCFGParser implements Parser {
             int i, int j, String parent) {
         List<Tree<String>> children = new ArrayList<Tree<String>>();
         Pair<Double, String> back = scoreBack.get(makeIndex(i, j)).get(parent);
+        System.out.println("Parent: " + parent);
         System.out.println(back);
         if (back.getSecond().equals("") && back.getFirst() > 0) {
             Tree<String> leaf = new Tree<String>("fake");
