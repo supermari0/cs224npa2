@@ -3,6 +3,7 @@ TODO
   - Sweet: HashMaps
   - Mario: Constrain number of combinations of binary rules
   https://piazza.com/class/hjz2ma06gdh2hg?cid=157
+  - Later: Profile and use IdentityHashMap -- see "Performance Tips"
 - Mario should look over vertical Markovization code
 - Change 2nd order vertical Markovization to be triggered by command line
   argument -- document different versions in your report.
