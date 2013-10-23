@@ -18,6 +18,10 @@ public class TreeAnnotations {
 
 	public static Tree<String> annotateTree(Tree<String> unAnnotatedTree) {
 
+        Tree<String> markov = unAnnotatedTree.deepCopy();
+        vMarkov(markov);
+        System.out.println(markov.toString());
+
 		// Currently, the only annotation done is a lossless binarization
 
 		// TODO: change the annotation from a lossless binarization to a
@@ -26,9 +30,20 @@ public class TreeAnnotations {
 		// TODO : mark nodes with the label of their parent nodes, giving a second
 		// order vertical markov process
 
-		return binarizeTree(unAnnotatedTree);
+		return binarizeTree(markov);
 
 	}
+
+    private static void vMarkov(Tree<String> copy) {
+        if (!copy.isLeaf()) {
+            String label = copy.getLabel().split("\\^")[0];
+            for (Tree<String> child : copy.getChildren()) {
+                String childLabel = child.getLabel();
+                child.setLabel(childLabel + "^" + label);
+                vMarkov(child);
+            }
+        }
+    }
 
 	private static Tree<String> binarizeTree(Tree<String> tree) {
 		String label = tree.getLabel();

@@ -25,8 +25,10 @@ public class PCFGParser implements Parser {
 
         lexicon = new Lexicon(binarizedTrainTrees);
         grammar = new Grammar(binarizedTrainTrees);
+        System.out.println(grammar.toString());
 
         nonterms = grammar.getAllTags();
+        System.out.println(nonterms.toString());
     }
 
 
@@ -40,7 +42,7 @@ public class PCFGParser implements Parser {
         fillingNonterminals(score, back, sentence);
         fillingTable(score, back, sentence);
         Tree<String> STree = buildTree(score, back, 0, 
-                sentence.size(), nonterms.indexOf("S"));
+                sentence.size(), nonterms.indexOf("S^ROOT"));
         List<Tree<String>> child = new ArrayList<Tree<String>>();
         child.add(STree);
         Tree<String> bestParse = new Tree<String>("ROOT", child);
