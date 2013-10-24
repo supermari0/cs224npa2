@@ -28,3 +28,6 @@ With ROOT instead of S time:
 real    9m49.456s
 user    10m21.008s
 sys     0m7.128s
+
+With 3rd-order Vertial Markov score:
+ [Average]    P: 83.52   R: 84.41   F1: 83.96   EX: 37.42 

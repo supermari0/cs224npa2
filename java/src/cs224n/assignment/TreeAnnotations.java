@@ -19,7 +19,7 @@ public class TreeAnnotations {
 	public static Tree<String> annotateTree(Tree<String> unAnnotatedTree) {
 
         Tree<String> markov = unAnnotatedTree.deepCopy();
-        vMarkov(markov);
+        thirdVMarkov(markov);
 
 		// Currently, the only annotation done is a lossless binarization
 
@@ -30,16 +30,36 @@ public class TreeAnnotations {
 		// order vertical markov process
 
 		return binarizeTree(markov);
-
 	}
 
-    private static void vMarkov(Tree<String> copy) {
+    private static void secondVMarkov(Tree<String> copy) {
         if (!copy.isPreTerminal() && !copy.isLeaf()) {
             String label = copy.getLabel().split("\\^")[0];
             for (Tree<String> child : copy.getChildren()) {
                 String childLabel = child.getLabel();
                 child.setLabel(childLabel + "^" + label);
-                vMarkov(child);
+                secondVMarkov(child);
+            }
+        }
+    }
+
+    private static void thirdVMarkov(Tree<String> copy) {
+        secondVMarkov(copy);
+        thirdVMarkovHelper(copy);
+    }
+
+    private static void thirdVMarkovHelper(Tree<String> copy) {
+        if (!copy.isPreTerminal() && !copy.isLeaf()) {
+            String[] label = copy.getLabel().split("\\^");
+            for (Tree<String> child : copy.getChildren()) {
+                String childLabel = child.getLabel().split("\\^")[0];
+                if (label.length == 1) {
+                    child.setLabel(childLabel + "^" + label[0]);
+                } else {
+                    child.setLabel(childLabel + "^" + 
+                            label[0] + "^" + label[1]);
+                }
+                thirdVMarkovHelper(child);
             }
         }
     }
