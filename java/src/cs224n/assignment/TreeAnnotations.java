@@ -29,12 +29,12 @@ public class TreeAnnotations {
 		// mark nodes with the label of their parent nodes, giving a second
 		// order vertical markov process
 
-		return markov;
+		return binarizeTree(markov);
 
 	}
 
     private static void vMarkov(Tree<String> copy) {
-        if (!copy.isPreTerminal()) {
+        if (!copy.isPreTerminal() && !copy.isLeaf()) {
             String label = copy.getLabel().split("\\^")[0];
             for (Tree<String> child : copy.getChildren()) {
                 String childLabel = child.getLabel();

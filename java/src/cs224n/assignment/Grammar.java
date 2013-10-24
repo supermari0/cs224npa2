@@ -253,6 +253,7 @@ public class Grammar {
 			binaryRuleCounter.incrementCount(binaryRule, 1.0);
 		}
 		if (tree.getChildren().size() < 1 || tree.getChildren().size() > 2) {
+            System.out.println(tree.getLabel() + tree.getChildren().size());
 			throw new RuntimeException("Attempted to construct a Grammar with an illegal tree: "+tree);
 		}
 		for (Tree<String> child : tree.getChildren()) {
