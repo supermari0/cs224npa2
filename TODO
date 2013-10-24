@@ -4,7 +4,7 @@ X Looks like we don't have to do this as long as we document the performance
     X Change 2nd order vertical Markovization to be triggered by command line
       argument -- document different versions in your report.
 X Remove all extraneous println
-- Comment code
+X Comment code
 - Write report
 - Later (if time): Profile and use IdentityHashMap -- see "Performance Tips"
 
