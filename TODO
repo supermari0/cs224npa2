@@ -1,10 +1,12 @@
 TODO
-- Later: Profile and use IdentityHashMap -- see "Performance Tips"
-- Change 2nd order vertical Markovization to be triggered by command line
-  argument -- document different versions in your report.
-- Remove all extraneous println
+X Looks like we don't have to do this as long as we document the performance
+  with different versions:
+    X Change 2nd order vertical Markovization to be triggered by command line
+      argument -- document different versions in your report.
+X Remove all extraneous println
 - Comment code
 - Write report
+- Later (if time): Profile and use IdentityHashMap -- see "Performance Tips"
 
 Optimization score:
  [Average]    P: 81.07   R: 75.64   F1: 78.26   EX: 20.00 

@@ -210,8 +210,6 @@ public class PCFGParser implements Parser {
             int i, int j, String parent) {
         List<Tree<String>> children = new ArrayList<Tree<String>>();
         Pair<Double, String> back = scoreBack.get(makeIndex(i, j)).get(parent);
-        System.out.println("Parent: " + parent);
-        System.out.println(back);
         if (back.getSecond().equals("") && back.getFirst() > 0) {
             Tree<String> leaf = new Tree<String>("fake");
             children.add(leaf);
