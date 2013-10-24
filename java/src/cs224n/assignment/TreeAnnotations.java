@@ -17,10 +17,6 @@ import cs224n.util.Filter;
 public class TreeAnnotations {
 
 	public static Tree<String> annotateTree(Tree<String> unAnnotatedTree) {
-
-        Tree<String> markov = unAnnotatedTree.deepCopy();
-        thirdVMarkov(markov);
-
 		// Currently, the only annotation done is a lossless binarization
 
 		// change the annotation from a lossless binarization to a
@@ -29,9 +25,20 @@ public class TreeAnnotations {
 		// mark nodes with the label of their parent nodes, giving a second
 		// order vertical markov process
 
-		return binarizeTree(markov);
+        secondVMarkov(unAnnotatedTree);
+        //thirdVMarkov(unAnnotatedTree);
+
+        unAnnotatedTree = binarizeTree(unAnnotatedTree);
+        //firstHMarkov(unAnnotatedTree);
+        //secondHMarkov(unAnnotatedTree);
+		return unAnnotatedTree;
 	}
 
+    /* 
+     * Function given a tree, creates the second
+     * Vertical Markov by recursively adding the current
+     * label to the children's labels
+     */
     private static void secondVMarkov(Tree<String> copy) {
         if (!copy.isPreTerminal() && !copy.isLeaf()) {
             String label = copy.getLabel().split("\\^")[0];
@@ -43,6 +50,12 @@ public class TreeAnnotations {
         }
     }
 
+    /* 
+     * Function given a tree, creates the third
+     * Vertical Markov by calling the secondVMarkov
+     * then calling the recursive helper function to add
+     * the current label to the grandchildren's label
+     */
     private static void thirdVMarkov(Tree<String> copy) {
         secondVMarkov(copy);
         thirdVMarkovHelper(copy);
@@ -60,6 +73,53 @@ public class TreeAnnotations {
                             label[0] + "^" + label[1]);
                 }
                 thirdVMarkovHelper(child);
+            }
+        }
+    }
+
+    /*
+     * Transforms an infinite Horizontal Markovization 
+     * binary tree into a 1st-order Horizontal markovization by
+     * only keeping the right-most non-terminal of the siblings.
+     * Recurse into leaf nodes.
+     */
+    private static void firstHMarkov(Tree<String> copy) {
+        if (!copy.isLeaf()) {
+            if (copy.getLabel().indexOf("->") > -1) {
+                String[] leftRight = copy.getLabel().split("\\-\\>");
+                String right = leftRight[1];
+                String[] siblings = right.split("\\_");
+                int sizeSibs = siblings.length;
+                copy.setLabel(leftRight[0] + "->..._" + 
+                        siblings[sizeSibs - 1]);
+            }
+            for (Tree<String> child : copy.getChildren()) {
+                firstHMarkov(child);
+            }
+        }
+    }
+
+    /*
+     * Transforms an infinite-order Horizontal Markovization
+     * binary tree into a 2nd-order Horizontal Markovization by
+     * only keeping the right-two most non-terminals of the
+     * siblings. Again, recurse into leaf nodes.
+     */
+    private static void secondHMarkov(Tree<String> copy) {
+        if (!copy.isLeaf()) {
+            if (copy.getLabel().indexOf("->") > -1) {
+                String[] leftRight = copy.getLabel().split("\\-\\>");
+                String right = leftRight[1];
+                if (right.indexOf("_", 1) != right.lastIndexOf("_")) {
+                    String[] siblings = right.split("\\_");
+                    int sizeSibs = siblings.length;
+                    copy.setLabel(leftRight[0] + "->..._" + 
+                            siblings[sizeSibs - 2] + "_" +
+                            siblings[sizeSibs - 1]);
+                }
+            }
+            for (Tree<String> child : copy.getChildren()) {
+                secondHMarkov(child);
             }
         }
     }

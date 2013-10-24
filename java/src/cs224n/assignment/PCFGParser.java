@@ -28,11 +28,10 @@ public class PCFGParser implements Parser {
         lexicon = new Lexicon(binarizedTrainTrees);
         grammar = new Grammar(binarizedTrainTrees);
 
+        // We wrote a function in Grammar which looks at all non-terms
+        // and creates a list. Not just the non-terminals in the given
+        // tree.
         nonterms = grammar.getAllTags();
-        // TODO: Possibly just look at the given list of trees
-        // before binarization for the nonterms in the first round
-        // of nonterm going to a word. It might be a lot faster
-        // but also slower since you need to Lexiconize each tree.
     }
 
 
@@ -62,7 +61,7 @@ public class PCFGParser implements Parser {
     private void fillingNonterminals(
             HashMap<String, HashMap<String, Pair<Double, String>>> scoreBack, 
             List<String> sentence) {
-        // Score the preterminals.
+        // Score the preterminals. This loop is for per leaf.
         for (int i = 0; i < sentence.size(); i++) {
             String word = sentence.get(i);
             HashMap<String, Pair<Double, String>> inner = 
@@ -80,6 +79,10 @@ public class PCFGParser implements Parser {
             while (added) {
                 added = false;
 
+                // For every rule which already has a great than 0
+                // prob of occurring, treat it as the child of a 
+                // unary and see if there's another rule that trumps
+                // the current probability.
                 String[] keys = inner.keySet().toArray(new String[0]);
                 for (int b = 0 ; b < keys.length ; b++) {
                     String nonterm = keys[b];
@@ -93,8 +96,6 @@ public class PCFGParser implements Parser {
                         for (int k = 0; k < unaryRules.size(); k++) {
 
                             UnaryRule unaryRule = unaryRules.get(k);
-                            // Find the index into the score array for the parent
-                            // of the unary rule.
                             String parent = unaryRule.getParent(); 
 
                             double prob = unaryRule.getScore() * bScore;
@@ -120,7 +121,9 @@ public class PCFGParser implements Parser {
     private void fillingTable(
             HashMap<String, HashMap<String, Pair<Double, String>>> scoreBack, 
             List<String> sentence) {
-        // Loop for creating span numbers 
+        // For every possible combination of span, split, begin, and end
+        // look at the child rules and see if it's possible to create
+        // a rule for the parent
         for (int span = 2 ; span <= sentence.size() ; span++) {
             for (int begin = 0 ; begin <= sentence.size() - span; begin++) {
                 int end = begin + span;
@@ -129,6 +132,8 @@ public class PCFGParser implements Parser {
                     scoreBack.put(makeIndex(begin, end), 
                             new HashMap<String, Pair<Double, String>>());
                 }
+                // For this tile, look at the possible splits that 
+                // could occur to comprise of this being and end span.
                 HashMap<String, Pair<Double, String>> beginEnd
                     = scoreBack.get(makeIndex(begin, end));
 
@@ -139,6 +144,10 @@ public class PCFGParser implements Parser {
                     HashMap<String, Pair<Double, String>> splitEnd 
                         = scoreBack.get(makeIndex(split, end));
 
+                    // For every left child, get all the rules that
+                    // exist for the left child and see if the corresponding
+                    // one exists for the right child, if so, then 
+                    // calculate the probability of this rule occurring
                     String[] keys = beginSplit.keySet().toArray(new String[0]);
                     for (int b = 0 ; b < keys.length ; b++) {
 
@@ -205,13 +214,17 @@ public class PCFGParser implements Parser {
     }
 
 
-    /* Create a tree given the score and the back pointers.
+    /* Given the scoreBack hashmap, the tile, and the rule parent,
+     * find the subtree of the highest probability 
      */
     private Tree<String> buildTree(
             HashMap<String, HashMap<String, Pair<Double, String>>> scoreBack,
             int i, int j, String parent) {
+
         List<Tree<String>> children = new ArrayList<Tree<String>>();
         Pair<Double, String> back = scoreBack.get(makeIndex(i, j)).get(parent);
+        // If this is a leaf, then just add a placeholder leaf
+        // that will be replaced during setWords()
         if (back.getSecond().equals("") && back.getFirst() > 0) {
             Tree<String> leaf = new Tree<String>("fake");
             children.add(leaf);
@@ -219,9 +232,13 @@ public class PCFGParser implements Parser {
         }
 
         String backEntry = back.getSecond();
+        // If it's a unary rule, look at the same tile but
+        // with different entry
         if (backEntry.indexOf("]") < 0) {
             children.add(buildTree(scoreBack, i, j, backEntry));
         } else {
+            // if it's a binary rule, look at the two tiles
+            // which are the results of the split.
             String[] triple = backEntry.split("\\]");
             Tree<String> leftSubtree = buildTree(scoreBack, i,
                     Integer.parseInt(triple[0]), triple[1]);

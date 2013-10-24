@@ -160,9 +160,19 @@ public class Grammar {
 		return CollectionUtils.getValueList(unaryRulesByChild, child);
 	}
 
+    /* 
+     * A function that we wrote which returns the entire set of all
+     * non-terminals in the grammar (including generated binary
+     * ones). This assumes that all binary rules
+     * which exist in binaryRulesByLeftChild also exists in 
+     * binaryRulesByRightChild. So it iterates through the binary and
+     * unary rules and add to the set, each rule.
+     */
     public List<String> getAllTags() {
         HashSet<String> tags = new HashSet<String>();
-        for (Map.Entry<String, List<BinaryRule>> entry : binaryRulesByLeftChild.entrySet()) {
+        for (Map.Entry<String, List<BinaryRule>> entry : 
+                binaryRulesByLeftChild.entrySet()) {
+
             tags.add(entry.getKey());
             for (BinaryRule rule : entry.getValue()) {
                 tags.add(rule.getParent());
@@ -170,7 +180,8 @@ public class Grammar {
             }
         }
 
-        for (Map.Entry<String, List<UnaryRule>> entry : unaryRulesByChild.entrySet()) {
+        for (Map.Entry<String, List<UnaryRule>> entry : 
+                unaryRulesByChild.entrySet()) {
             tags.add(entry.getKey());
             for (UnaryRule rule : entry.getValue()) {
                 tags.add(rule.getParent());
