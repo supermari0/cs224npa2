@@ -17,7 +17,8 @@ public class PCFGParser implements Parser {
     private static List<String> nonterms;
 
     public void train(List<Tree<String>> trainTrees) {
-        // Binarize the training tree so that rules are at most binary.
+        // Binarize and annotate the training tree so that rules are at most
+        // binary and we use second-order vertical Markovization.
         List<Tree<String>> binarizedTrainTrees = new ArrayList<Tree<String>>();
 
         for (Tree<String> tree : trainTrees) {
@@ -28,7 +29,7 @@ public class PCFGParser implements Parser {
         grammar = new Grammar(binarizedTrainTrees);
 
         nonterms = grammar.getAllTags();
-        // Possibly just look at the given list of trees
+        // TODO: Possibly just look at the given list of trees
         // before binarization for the nonterms in the first round
         // of nonterm going to a word. It might be a lot faster
         // but also slower since you need to Lexiconize each tree.
@@ -43,17 +44,20 @@ public class PCFGParser implements Parser {
         HashMap<String, HashMap<String, Pair<Double, String>>> scoreBack = 
             new HashMap<String, HashMap<String, Pair<Double, String>>>();
 
+        // Score different parses of the sentence.
         fillingNonterminals(scoreBack, sentence);
         fillingTable(scoreBack, sentence);
+
+        // Reconstruct the best parse tree from this information.
         Tree<String> bestParse = buildTree(scoreBack, 0, 
                 sentence.size(), "ROOT");
         bestParse.setWords(sentence);
         bestParse = TreeAnnotations.unAnnotateTree(bestParse);
+
         return bestParse;
     }
 
-    /* The first part of the CKY Algorithm to fill the non-terminal that 
-     * become words
+    /* The first part of the CKY Algorithm to fill the preterminals.
      */
     private void fillingNonterminals(
             HashMap<String, HashMap<String, Pair<Double, String>>> scoreBack, 
@@ -65,8 +69,6 @@ public class PCFGParser implements Parser {
                 new HashMap<String, Pair<Double, String>>();
             scoreBack.put(makeIndex(i, i+1), inner);
             for (String nonterm: nonterms) {
-                // https://piazza.com/class/hjz2ma06gdh2hg?cid=142
-                
                 double scoreTag = lexicon.scoreTagging(word, nonterm);
                 if (scoreTag > 0) {
                     inner.put(nonterm, new Pair<Double, String>(scoreTag, ""));
@@ -113,7 +115,7 @@ public class PCFGParser implements Parser {
 
 
     /* The second part of the CKY algorithm which fills the transition
-     * rules for non-terminals
+     * rules for other non-terminals.
      */
     private void fillingTable(
             HashMap<String, HashMap<String, Pair<Double, String>>> scoreBack, 
@@ -203,7 +205,7 @@ public class PCFGParser implements Parser {
     }
 
 
-    /* Create a tree given the score and the point backs 
+    /* Create a tree given the score and the back pointers.
      */
     private Tree<String> buildTree(
             HashMap<String, HashMap<String, Pair<Double, String>>> scoreBack,
