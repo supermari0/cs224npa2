@@ -1,10 +1,5 @@
 TODO
-- Optimization
-  - Sweet: HashMaps
-  - Mario: Constrain number of combinations of binary rules
-  https://piazza.com/class/hjz2ma06gdh2hg?cid=157
-  - Later: Profile and use IdentityHashMap -- see "Performance Tips"
-- Mario should look over vertical Markovization code
+- Later: Profile and use IdentityHashMap -- see "Performance Tips"
 - Change 2nd order vertical Markovization to be triggered by command line
   argument -- document different versions in your report.
 - Remove all extraneous println
@@ -27,7 +22,7 @@ With Markov time:
 
 With ROOT instead of S:
  [Average]    P: 83.71   R: 81.33   F1: 82.50   EX: 32.26
-With ROOT instead of S:
+With ROOT instead of S time:
 real    9m49.456s
 user    10m21.008s
 sys     0m7.128s
